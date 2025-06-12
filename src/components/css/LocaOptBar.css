@@ -1,0 +1,61 @@
+.loca-opt-bar {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  background-color: #f8f8f8;
+  overflow: hidden;
+}
+
+.arrow-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+  color: #333;
+}
+
+.card-list {
+  display: flex;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  gap: 16px;
+  padding: 0 12px;
+  flex: 1;
+}
+
+.card {
+  position: relative;
+  min-width: 80px;
+  text-align: center;
+  opacity: 0.5;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.card img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.card span {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  color: #333;
+}
+
+.card.selected {
+  opacity: 1;
+}
+
+.pin-icon {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 18px;
+  color: black;
+}
