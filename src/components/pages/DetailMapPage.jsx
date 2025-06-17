@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate } from "react-router-dom";
 
 
@@ -7,28 +7,32 @@ function DetailMapPage() {
   const [results, setResults] = useState([]);
   const [filterText, setFilterText] = useState([]);
 
+  const [selectedShop, setSelectedShop] = useState(null);
+  const [map, setMap] = useState(null);  
+
   const keyword = searchParams.get("keyword");
   const region = searchParams.get("region");
   const category = searchParams.get("category");
   const delivery = searchParams.get("delivery");
   const gunguCd = searchParams.get("selId");
+  const lat = searchParams.get("lat");
+  const lng = searchParams.get("lng");
 
   const PUBLIC_API_KEY = import.meta.env.VITE_PUBLIC_API_KEY;
   const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_API_KEY;
 
   const filterData = () => {
-    //results
     // const filteredData = results.filter(data => data.gunguCode.includes(gunguCd));
     const stored = JSON.parse(localStorage.getItem('storeData')) || [];
     // const filtered = stored.filter(item => item.storeName?.includes(keyword) || item.gunguCode?.includes(gunguCd));
     const cleanKeyword = gunguCd.toString().trim();
-    const filtered = stored.filter(item => item.coJobSt==="01" && item.gunguCode?.toString().includes(cleanKeyword));
+    
+    let filtered = [];
+    if(cleanKeyword) {
+        filtered = stored.filter(item => item.coJobSt==="01" && item.gunguCode?.toString().includes(cleanKeyword));
+    }
 
-    // stored.forEach(item => {
-    //   console.log(`item.gunguCode: [${item.gunguCode}], keyword: [${gunguCd}]`);
-    // });
-
-    console.log('filtered: ', filtered);
+    // console.log('filtered: ', filtered);
     setFilterText(filtered);
   };
 
@@ -81,10 +85,10 @@ function DetailMapPage() {
 
 
   useEffect(() => {
+    //✅ 2. kakaoMap API 호출
     const script = document.createElement("script");
 
     script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_API_KEY}&autoload=false&libraries=services`;
-    // script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${import.meta.env.VITE_PUBLIC_API_KEY}&autoload=false`;
     script.async = true;
     document.head.appendChild(script);
 
@@ -92,19 +96,62 @@ function DetailMapPage() {
       window.kakao.maps.load(() => {
         const container = document.getElementById("map");
         const options = {
-          center: new window.kakao.maps.LatLng(35.849005, 128.558425),
+          // center: new window.kakao.maps.LatLng(35.849005, 128.558425),
+          // center: new window.kakao.maps.LatLng(35.6334626219468, 128.425151210972),
+          center: new window.kakao.maps.LatLng(lat, lng),
           level: 3,
         };
-        const map = new window.kakao.maps.Map(container, options);
+        const kakaoMap = new window.kakao.maps.Map(container, options);
+        setMap(kakaoMap);
       });
     };
-
+    
     script.onerror = () => {
       console.log('fail: ', script.src);
     }
+
+    filterData();
   }, []);
 
+  useEffect(() => {
+    if (!map) return;
 
+    const rawData = filterText;
+    if(!filterText) return;
+    console.log('markerData: ', rawData);
+
+    const infoWindow = new window.kakao.maps.InfoWindow();
+
+    rawData.forEach(item => {
+      console.log('item: ', item);
+      const marker = new window.kakao.maps.Marker({
+        map: map,
+        position: new window.kakao.maps.LatLng(parseFloat(item.shopLat), parseFloat(item.shopLon)),
+        title: item.shopName,
+      });
+      const content = `
+        <div style="padding:5px; font-size:13px;">
+          <strong>${item.shopName}</strong><br />
+          주소: ${item.shopRoadAddr}<br />
+          전화: ${item.shopTel}
+        </div>
+      `;
+
+      window.kakao.maps.event.addListener(marker, "click", () => {
+        setSelectedShop(item);
+        infoWindow.setContent(content);
+        infoWindow.open(map,marker);
+      });
+    });
+  }, [map]);
+
+      // <div>
+      //   <ul>
+      //     {filterText.map((item, i) => (
+      //       <li key={i}>{item.shopName} - {item.gunguCode}</li>
+      //     ))}
+      //   </ul>
+      // </div>
 
   return (
     <div>
@@ -115,13 +162,23 @@ function DetailMapPage() {
         <p>카테고리: {category}</p>
         <p>배달 여부: {delivery}</p>
       </div>
-      <div id="map" style={{ width: '540px', height: '500px' }}></div>
-      <div>
-        <ul>
-          {filterText.map((item, i) => (
-            <li key={i}>{item.shopName} - {item.gunguCode}</li>
-          ))}
-        </ul>
+      <div style={{ display: "flex" }}>
+        <div id="map" style={{ width: '520px', height: '500px' }}></div>
+
+        {/* 오른쪽 상세 정보 패널 */}
+        <div style={{ width: "300px", padding: "10px", borderLeft: "1px solid #ccc" }}>
+          {selectedShop ? (
+            <div>
+              <h3>{selectedShop.shopName}</h3>
+              <p><strong>주소:</strong> {selectedShop.shopRoadAddr}</p>
+              <p><strong>전화:</strong> {selectedShop.shopTel}</p>
+              <p><strong>프랜차이즈:</strong> {selectedShop.coFrNm}</p>
+              <p><strong>배달 여부:</strong> {selectedShop.deliverYn === "Y" ? "가능" : "불가"}</p>
+            </div>
+          ) : (
+            <p>지도에서 마커를 클릭하세요.</p>
+          )}
+        </div>
       </div>
     </div>
   );
