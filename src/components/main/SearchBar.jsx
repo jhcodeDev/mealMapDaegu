@@ -7,6 +7,7 @@ export default function SearchBar() {
   const [region, setRegion] = useState("전체");
   const [category, setCategory] = useState("전체");
   const [delivery, setDelivery] = useState("전체");
+  const [type_opt, setType_opt] = useState("SRC");
   const navigate = useNavigate();
   
   const handleReset = () => {
@@ -17,10 +18,17 @@ export default function SearchBar() {
   };
 
   const handleSearch = () => {
+    if(!keyword) {
+      alert('please insert the keyword'); 
+      return;
+    }
+
     console.log("검색:", { keyword, region, category, delivery });
     // 검색 로직 처리
+    setType_opt("SRC");
 
     const params = new URLSearchParams({
+      type_opt,
       keyword,
       region,
       category,
@@ -49,23 +57,41 @@ export default function SearchBar() {
       {/* 필터 */}
       <div className="filters">
         <select value={region} onChange={(e) => setRegion(e.target.value)}>
-          <option>전체</option>
-          <option>서울</option>
-          <option>부산</option>
+          <option value="">전체</option>
+          <option value="27140">동구</option>
+          <option value="27290">달서구</option>
+          <option value="27710">달성군</option>
+          <option value="27230">북구</option>
+          <option value="27170">서구</option>
+          <option value="27110">중구</option>
+          <option value="27260">수성구</option>
+          <option value="27200">남구</option>
         </select>
 
         <select value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option>전체</option>
-          <option>한식</option>
-          <option>중식</option>
+          <option value="">전체 </option>
+          <option value="10">치킨/찜닭 </option>
+          <option value="11">중식 </option>
+          <option value="12">분식 </option>
+          <option value="13">한식 </option>
+          <option value="14">찜/탕 </option>
+          <option value="15">피자 </option>
+          <option value="16">족발/보쌈 </option>
+          <option value="17">패스트푸드 </option>
+          <option value="18">돈까스/일식 </option>
+          <option value="19">도시락/죽 </option>
+          <option value="20">카페/디저트 </option>
+          <option value="21">아시안/양식 </option>
+          <option value="22">반찬/신선 </option>
+          <option value="23">편의점 </option>
         </select>
 
         <div className="delivery-options">
           <label>
             <input
               type="radio"
-              value="전체"
-              checked={delivery === "전체"}
+              value=""
+              checked={delivery === ""}
               onChange={(e) => setDelivery(e.target.value)}
             />
             전체
@@ -73,8 +99,8 @@ export default function SearchBar() {
           <label>
             <input
               type="radio"
-              value="배달가능"
-              checked={delivery === "배달가능"}
+              value="Y"
+              checked={delivery === "Y"}
               onChange={(e) => setDelivery(e.target.value)}
             />
             배달가능
@@ -82,8 +108,8 @@ export default function SearchBar() {
           <label>
             <input
               type="radio"
-              value="배달불가"
-              checked={delivery === "배달불가"}
+              value="N"
+              checked={delivery === "N"}
               onChange={(e) => setDelivery(e.target.value)}
             />
             배달불가

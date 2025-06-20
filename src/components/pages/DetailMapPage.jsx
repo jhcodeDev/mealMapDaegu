@@ -1,6 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate } from "react-router-dom";
 
+const mockData = [
+  { id: "27140", label: "동구", lat: "35.887574", lng: "128.635579"},
+  { id: "27290", label: "달서구", lat: "35.829812", lng: "128.532666"},
+  { id: "27710", label: "달성군", lat: "35.774707", lng: "128.431367"},
+  { id: "27230", label: "북구", lat: "35.885865", lng: "128.582914"},
+  { id: "27170", label: "서구", lat: "35.871950", lng: "128.559220"},
+  { id: "27110", label: "중구", lat: "35.869423", lng: "128.606121"},
+  { id: "27260", label: "수성구", lat: "35.858174", lng: "128.630541"},
+  { id: "27200", label: "남구", lat: "35.846140", lng: "128.597418"},
+  // 필요한 만큼 더 추가
+];
+
 
 function DetailMapPage() {
   const [searchParams] = useSearchParams();
@@ -11,28 +23,41 @@ function DetailMapPage() {
   const [map, setMap] = useState(null);  
 
   const keyword = searchParams.get("keyword");
-  const region = searchParams.get("region");
+  const region = searchParams.get("region")?? "";
   const category = searchParams.get("category");
   const delivery = searchParams.get("delivery");
   const gunguCd = searchParams.get("selId");
-  const lat = searchParams.get("lat");
-  const lng = searchParams.get("lng");
+  const lat = searchParams.get("lat")?? "35.850909";
+  const lng = searchParams.get("lng")?? "128.550726";
+  const type = searchParams.get("type_opt")?? "SRC";
 
   const PUBLIC_API_KEY = import.meta.env.VITE_PUBLIC_API_KEY;
   const KAKAO_API_KEY = import.meta.env.VITE_KAKAO_API_KEY;
 
   const filterData = () => {
-    // const filteredData = results.filter(data => data.gunguCode.includes(gunguCd));
     const stored = JSON.parse(localStorage.getItem('storeData')) || [];
-    // const filtered = stored.filter(item => item.storeName?.includes(keyword) || item.gunguCode?.includes(gunguCd));
-    const cleanKeyword = gunguCd.toString().trim();
     
     let filtered = [];
-    if(cleanKeyword) {
-        filtered = stored.filter(item => item.coJobSt==="01" && item.gunguCode?.toString().includes(cleanKeyword));
+    if(type === "SRC") {
+      if(keyword) {
+        const clean = str => str?.toLowerCase().replace(/\s/g, '');
+
+        filtered = stored.filter(item => 
+          item.coJobSt==="01"
+          && clean(item.shopName).includes(keyword.toLowerCase())
+          && item.gunguCode?.toString().includes(region)
+          // && item.shopBsType?.toString().includes(category==="전체"?"":category)
+          // && item.deliverYn?.toString().includes(delivery==="전체"?"":delivery)
+        );
+
+      }
+    } else {
+      const cleanKeyword = gunguCd?.toString().trim();
+      if(cleanKeyword) {
+          filtered = stored.filter(item => item.coJobSt==="01" && item.gunguCode?.toString().includes(cleanKeyword));
+      }
     }
 
-    // console.log('filtered: ', filtered);
     setFilterText(filtered);
   };
 
@@ -92,6 +117,12 @@ function DetailMapPage() {
     script.async = true;
     document.head.appendChild(script);
 
+    let coords = "";
+    if(region) {
+      coords = mockData.find(mock => mock.id === region);
+    }
+    const {lat, lng} = coords;
+
     script.onload = () => {
       window.kakao.maps.load(() => {
         const container = document.getElementById("map");
@@ -145,13 +176,44 @@ function DetailMapPage() {
     });
   }, [map]);
 
-      // <div>
-      //   <ul>
-      //     {filterText.map((item, i) => (
-      //       <li key={i}>{item.shopName} - {item.gunguCode}</li>
-      //     ))}
-      //   </ul>
-      // </div>
+  const handleSearchInCurrentRegion = async () => {
+    if (!map) return;
+
+    const center = map.getCenter();
+    const lat = center.getLat();
+    const lng = center.getLng();
+
+    const radius = 1000; // 단위: 미터 (ex. 1km 반경)
+
+    console.log("현재 중심 좌표:", lat, lng);
+
+    // 서버에 요청 보내거나 클라이언트에서 거리 기반 필터링
+    const params = {
+      lat,
+      lng,
+      radius,
+    };
+
+    // API 호출 예시
+    const url = `${endPoint}/getNearbyParks?lat=${lat}&lng=${lng}&radius=${radius}`;
+    const res = await fetch(url);
+    const json = await res.json();
+
+    // 마커 다시 그리기 등 후속 작업
+    updateMapMarkers(json.items);
+  };
+
+
+  const updateMapMarkers = (items) => {
+    items.forEach(({ lat, lng, name }) => {
+      const marker = new window.kakao.maps.Marker({
+        position: new window.kakao.maps.LatLng(lat, lng),
+        map: map,
+        title: name,
+      });
+    });
+  };
+
 
   return (
     <div>
@@ -162,8 +224,28 @@ function DetailMapPage() {
         <p>카테고리: {category}</p>
         <p>배달 여부: {delivery}</p>
       </div>
-      <div style={{ display: "flex" }}>
+      <div style={{ display: "relative" }}>
+        
         <div id="map" style={{ width: '520px', height: '500px' }}></div>
+
+        {/* 지도 위 버튼 */}
+        <button
+          onClick={handleSearchInCurrentRegion}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            zIndex: 10,
+            padding: '8px 12px',
+            background: '#3182f6',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+        >
+          이 지역에서 찾기
+        </button>
 
         {/* 오른쪽 상세 정보 패널 */}
         <div style={{ width: "300px", padding: "10px", borderLeft: "1px solid #ccc" }}>

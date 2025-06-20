@@ -4,6 +4,7 @@ import "../css/LocaOptBar.css";
 
 
 const mockData = [
+  // { id: "", label: "내 위치", lat: "", lng: "",  img: "/assets/logo_donggu.jpg" },
   { id: "27140", label: "동구", lat: "35.887574", lng: "128.635579",  img: "/assets/logo_donggu.jpg" },
   { id: "27290", label: "달서구", lat: "35.829812", lng: "128.532666",  img: "../../assets/react.svg" },
   { id: "27710", label: "달성군", lat: "35.774707", lng: "128.431367",  img: "/img3.jpg" },
@@ -19,6 +20,7 @@ export default function LocaOptBar() {
   const [selectedId, setSelectedId] = useState(1);
   const scrollRef = useRef(null);
   const navigate = useNavigate();
+  const [type_opt, setType_opt] = useState("OPT");
 
   const scroll = (direction) => {
     const scrollAmount = 200;
@@ -32,7 +34,10 @@ export default function LocaOptBar() {
 
   const handleLoca = (selId, lat, lng) => {
     setSelectedId(selId);
+    setType_opt("OPT");
+
     const params = new URLSearchParams({
+      type_opt,
       selId,
       lat,
       lng
