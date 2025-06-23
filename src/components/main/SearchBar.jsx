@@ -4,15 +4,15 @@ import "../css/SearchBar.css";
 
 export default function SearchBar() {
   const [keyword, setKeyword] = useState("");
-  const [region, setRegion] = useState("전체");
+  const [region, setRegion] = useState("");
   const [category, setCategory] = useState("전체");
-  const [delivery, setDelivery] = useState("전체");
+  const [delivery, setDelivery] = useState("");
   const [type_opt, setType_opt] = useState("SRC");
   const navigate = useNavigate();
   
   const handleReset = () => {
     setKeyword("");
-    setRegion("전체");
+    setRegion("");
     setCategory("전체");
     setDelivery("전체");
   };

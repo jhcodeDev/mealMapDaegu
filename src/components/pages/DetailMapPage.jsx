@@ -45,9 +45,8 @@ function DetailMapPage() {
         filtered = stored.filter(item => 
           item.coJobSt==="01"
           && clean(item.shopName).includes(keyword.toLowerCase())
-          && item.gunguCode?.toString().includes(region)
-          // && item.shopBsType?.toString().includes(category==="전체"?"":category)
-          // && item.deliverYn?.toString().includes(delivery==="전체"?"":delivery)
+          && (region === "" || item.gunguCode?.toString().includes(region))
+          && (delivery === "" || item.deliverYn?.toString().includes(delivery))
         );
 
       }
@@ -118,10 +117,12 @@ function DetailMapPage() {
     document.head.appendChild(script);
 
     let coords = "";
-    if(region) {
-      coords = mockData.find(mock => mock.id === region);
+    console.log('region: ', region);
+    if(region !== "") {
+        coords = mockData.find(mock => mock.id === region);
+        lat = coords.lat;
+        lng = coords.lng;
     }
-    const {lat, lng} = coords;
 
     script.onload = () => {
       window.kakao.maps.load(() => {
@@ -176,45 +177,6 @@ function DetailMapPage() {
     });
   }, [map]);
 
-  const handleSearchInCurrentRegion = async () => {
-    if (!map) return;
-
-    const center = map.getCenter();
-    const lat = center.getLat();
-    const lng = center.getLng();
-
-    const radius = 1000; // 단위: 미터 (ex. 1km 반경)
-
-    console.log("현재 중심 좌표:", lat, lng);
-
-    // 서버에 요청 보내거나 클라이언트에서 거리 기반 필터링
-    const params = {
-      lat,
-      lng,
-      radius,
-    };
-
-    // API 호출 예시
-    const url = `${endPoint}/getNearbyParks?lat=${lat}&lng=${lng}&radius=${radius}`;
-    const res = await fetch(url);
-    const json = await res.json();
-
-    // 마커 다시 그리기 등 후속 작업
-    updateMapMarkers(json.items);
-  };
-
-
-  const updateMapMarkers = (items) => {
-    items.forEach(({ lat, lng, name }) => {
-      const marker = new window.kakao.maps.Marker({
-        position: new window.kakao.maps.LatLng(lat, lng),
-        map: map,
-        title: name,
-      });
-    });
-  };
-
-
   return (
     <div>
       <div>
@@ -230,7 +192,6 @@ function DetailMapPage() {
 
         {/* 지도 위 버튼 */}
         <button
-          onClick={handleSearchInCurrentRegion}
           style={{
             position: 'absolute',
             top: '10px',
