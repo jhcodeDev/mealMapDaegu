@@ -45,7 +45,7 @@ export default function SearchBar() {
         <input
           type="text"
           value={keyword}
-          placeholder="검색어를 입력해주세요"
+          placeholder="상호명을 입력해주세요"
           onChange={(e) => setKeyword(e.target.value)}
         />
         {keyword && <button onClick={() => setKeyword("")}>❌</button>}
